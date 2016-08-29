@@ -1,0 +1,261 @@
+<!DOCTYPE>
+
+<html>
+
+  <head>
+    <title>Visualize N-dimensional Data in 2D</title>
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script src="http://cytoscape.github.io/cytoscape.js/api/cytoscape.js-latest/cytoscape.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
+	<link href="http://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.css" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-qtip/2.2.5/cytoscape-qtip.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto">
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <!-- for testing with local version of cytoscape.js -->
+    <!-- <script src="../cytoscape.js/build/cytoscape.js"></script> -->
+
+    <style>
+      body {
+        font-family: Roboto;
+        font-size: 14px;
+        background-color: #34495e;
+        margin-left: 10%;
+        margin-right: 10%;
+        margin-top: 2%;
+        margin-bottom: 2%;
+      }
+
+      #cy {
+        width: 100%;
+        height: 75%;
+        background-color: #2c3e50;
+        left: 0;
+        top: 0;
+        z-index: 999;
+      }
+
+      h1 {
+        opacity: 1;
+        color: #ecf0f1;
+        font-size: 2em;
+        text-align: center;
+        font-family: Roboto;
+      }
+      h3 {
+        opacity: 1;
+        color: #ecf0f1;
+        font-size: 1em;
+        text-align: center;
+        font-family: Roboto;
+      }
+
+      textarea{
+    	width: 80%;
+    	height: 50%;
+	 }
+    </style>
+
+    <script>
+    var idCount = 1;
+    var xspace = screen.width/1.35/20;
+    var yspace = screen.width/1.7/20;
+    var numRows = 10;
+    var numCols = 20;
+    var dim = -1;
+    var n = -1;
+    var data = [];
+
+    $(function(){
+    	
+
+        var cy = window.cy = cytoscape({
+          container: document.getElementById('cy'),
+
+          boxSelectionEnabled: false,
+          autounselectify: true,
+          
+          layout: {
+            name: 'grid'
+          },
+
+          style: [
+            {
+              selector: 'node',
+              style: {
+              	'height': screen.width/2/20/2,
+                'width': screen.width/2/20,
+                //'background-color': '#2ecc71',
+                'label': 'data(points)', 
+                'text-wrap': 'wrap', 
+                'text-max-width':40,
+                'shape' : 'roundrectangle', 
+                'selectable' : false,
+                'color' : '#ecf0f1',
+                'font-size' : 5
+              } 
+            },
+
+            {
+              selector: 'edge',
+              style: {
+                'curve-style': 'haystack',
+                'haystack-radius': 0,
+                'width': 5,
+                'opacity': 0.5,
+                'line-color': '#a2efa2'
+              }
+            }
+          ],
+        });
+
+			for(var i=1; i<=numRows; i++)
+           	{
+           		for(var j=1; j<=numCols; j++)
+           		{
+           			var eleID = (i-1)*numCols+j;
+		           	cy.add({
+		           		"data":{"id": eleID.toString(), "points":""},
+			           	"position":{"x":xspace*j,"y":yspace*i},
+			           	"group":"nodes",
+			           	"removed":false,
+			           	"selected":false,
+			           	"selectable":false,
+			           	"locked":false,
+			           	"grabbable":false,
+			           	"classes":""
+		           	});
+	           }
+	        }
+
+
+		cy.on('mouseover', 'node', function(event) {
+		    var node = event.cyTarget;
+		    node.qtip({
+		         content: {
+		         	'title':'Clustered Points',
+		         	'text': node.data('points')
+		         },
+		         show: {
+		            event: event.type,
+		            ready: true, 
+		            solo: true
+		         },
+		         hide: {
+		            event: 'mouseout'
+         		},
+         		class : 'qtip-rounded',
+         		style : {
+         			classes : "qtip-light qtip-rounded qtip-shadow"
+         		}
+    		}, event);
+		});
+    });
+
+	function init()
+	{
+		for(var id=1; id<=numCols*numRows;id++)
+		{
+			//initialize each node to a random tint
+			var row = id/numCols;
+			var col = id - numCols*row;
+			row = 50 + row/numRows * 150;
+			col = col/numCols * 255;
+			var node = cy.getElementById(id.toString())
+			node.style('background-color', 'rgb('+row.toString()+','+col.toString()+', 255)');
+		}
+	}
+
+	function getVector(id)
+	{
+		//returns array of 
+		vector = [];
+		var node = cy.getElementById(id.toString());
+			//add random weight vectors to each node
+			for(var d=1; d<=dim; d++)
+				vector.push(parseInt(node.data('v'+d.toString()))/255.0);
+		return vector;
+	}
+
+	function parseData()
+	{
+		var lines = document.getElementById("inputdata").value.trim().split('\n'); 
+		n = 0;
+		for(var i=0; i<lines.length; i++)
+		{
+			if(lines[i].trim() != '')
+			{
+				n++;
+				lines[i] = lines[i].trim().split(' ');
+				data.push(lines[i]);
+				if(dim==-1)
+				{
+					dim = lines[i].length-1;
+					if(dim<3)
+						alert('Error: Dimension is less than 3.')
+				}
+				else if(dim!=lines[i].length-1)
+				{
+					alert((i+1).toString()+' data line does not match dimension');
+					break;
+				}
+			}
+		}
+		console.log("Dim: "+dim);
+		console.log("N: "+n);
+		
+		/*for(var g=0;g<n;g++)
+		{
+			for(var h=0;h<dim+1;h++)
+				console.log(data[g][h]+' ');
+			console.log('\n')
+		}*/
+
+		for(var i=1; i<=numCols*numRows; i++)
+		{
+			var node = cy.getElementById(i.toString());
+			//add random weight vectors to each node
+			for(var d=1; d<=dim; d++)
+				node.data('v'+d.toString(), (Math.random()*255).toString());
+			node.style('background-color', 'rgb('+node.data('v1')+','+node.data('v2')+',' +node.data('v3')+')');
+			//console.log(JSON.stringify(getVector(i)));
+		}
+	}
+
+	function go()
+	{
+		init();
+
+	}
+
+	function visualize()
+	{
+		parseData();
+	}
+    </script>
+  </head>
+
+  <body onload="go()">
+    <h1>Visualize N-dimensional data in 2D</h1>
+    <h3>Scroll to zoom, drag mouse to pan. </h3>
+    <div id="cy"></div>
+    <div style="text-align: center">
+    <h3>Enter multi-dimensional data below</h3>
+	<textarea id="inputdata">P1 100 500 1000
+P2 0 12 4</textarea>
+<br>
+	<button class="btn btn-default" onclick="visualize()">Go!</button>
+	</div>
+  </body>
+
+</html>
